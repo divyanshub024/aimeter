@@ -1,0 +1,44 @@
+name: AIMeter
+options:
+  createIntermediateGroups: true
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+targets:
+  AIMeter:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Sources/AIMeter
+        excludes:
+          - Resources/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.divyanshu.aimeter
+        INFOPLIST_FILE: Sources/AIMeter/Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_EMIT_LOC_STRINGS: NO
+        PRODUCT_NAME: AIMeter
+    scheme:
+      testTargets:
+        - AIMeterTests
+  AIMeterTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Tests/AIMeterTests
+    dependencies:
+      - target: AIMeter
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.divyanshu.aimeter.tests
+        GENERATE_INFOPLIST_FILE: YES

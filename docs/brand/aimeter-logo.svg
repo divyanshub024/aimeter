@@ -1,0 +1,18 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">AIMeter logo</title>
+  <desc id="desc">A rounded dark app icon with a centered blue usage meter.</desc>
+  <defs>
+    <filter id="shadow" x="34" y="28" width="444" height="462" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="22" stdDeviation="24" flood-color="#020617" flood-opacity="0.24"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="62" y="52" width="388" height="388" rx="92" fill="#0F172A"/>
+    <rect x="73" y="63" width="366" height="366" rx="82" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="22"/>
+  </g>
+  <path d="M126 300a130 130 0 0 1 260 0" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="38" stroke-linecap="round"/>
+  <path d="M126 300a130 130 0 0 1 222-92" stroke="#0EA5E9" stroke-width="38" stroke-linecap="round"/>
+  <path d="M256 300l82-84" stroke="#F8FAFC" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="256" cy="300" r="24" fill="#F8FAFC"/>
+  <circle cx="256" cy="300" r="10" fill="#2563EB"/>
+</svg>
