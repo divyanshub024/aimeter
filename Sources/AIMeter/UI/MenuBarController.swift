@@ -32,10 +32,13 @@ final class MenuBarController {
     }
 
     private func configureStatusItem() {
+        statusItem.autosaveName = "AIMeter.StatusItem"
+
         guard let button = statusItem.button else { return }
         button.target = self
         button.action = #selector(togglePopover)
-        button.imagePosition = .imageLeading
+        button.image = nil
+        button.imagePosition = .noImage
     }
 
     private func configurePopover() {
@@ -76,14 +79,12 @@ final class MenuBarController {
     private func updateStatusItem(_ state: DashboardState) {
         guard let button = statusItem.button else { return }
 
-        button.image = StatusBarImageFactory.image(
-            progress: state.cursorSnapshot.totalUsedPercent / 100,
-            state: state.cursorSnapshot.connectionState
-        )
+        button.image = nil
         button.attributedTitle = NSAttributedString(
             string: menuBarTitle(for: state.cursorSnapshot),
             attributes: [
-                .font: NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
+                .font: NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .semibold),
+                .foregroundColor: menuBarTextColor(for: state.cursorSnapshot.connectionState)
             ]
         )
 
@@ -92,10 +93,21 @@ final class MenuBarController {
 
     private func menuBarTitle(for snapshot: CursorUsageSnapshot) -> String {
         guard snapshot.hasSuccessfulSync else {
-            return "--"
+            return snapshot.connectionState == .disconnected ? "--" : "!"
         }
 
-        return DisplayFormatting.percent(snapshot.totalUsedPercent)
+        return "\(Int(min(max(snapshot.totalUsedPercent, 0), 100).rounded()))%"
+    }
+
+    private func menuBarTextColor(for state: CursorConnectionState) -> NSColor {
+        switch state {
+        case .connected:
+            return .labelColor
+        case .authExpired, .syncFailed:
+            return .systemOrange
+        case .disconnected:
+            return .secondaryLabelColor
+        }
     }
 
     private func tooltip(for state: DashboardState) -> String {
@@ -177,61 +189,5 @@ final class MenuBarController {
         }
 
         return true
-    }
-}
-
-private enum StatusBarImageFactory {
-    static func image(progress: Double, state: CursorConnectionState) -> NSImage {
-        let size = NSSize(width: 34, height: 16)
-        let image = NSImage(size: size)
-        image.lockFocus()
-
-        let barRect = NSRect(x: 4, y: 4, width: 22, height: 8)
-        drawBar(rect: barRect, progress: progress, color: .systemBlue, isConnected: state == .connected)
-        drawIndicator(atX: 29, state: state)
-
-        image.unlockFocus()
-        image.isTemplate = false
-        return image
-    }
-
-    private static func drawBar(rect: NSRect, progress: Double, color: NSColor, isConnected: Bool) {
-        let backgroundPath = NSBezierPath(roundedRect: rect, xRadius: 4, yRadius: 4)
-        NSColor.tertiaryLabelColor.withAlphaComponent(isConnected ? 0.25 : 0.12).setFill()
-        backgroundPath.fill()
-
-        guard isConnected else {
-            return
-        }
-
-        let clamped = min(max(progress, 0), 1)
-        guard clamped > 0 else {
-            return
-        }
-
-        let fillRect = NSRect(x: rect.minX, y: rect.minY, width: rect.width * clamped, height: rect.height)
-        let fillPath = NSBezierPath(roundedRect: fillRect, xRadius: 4, yRadius: 4)
-        color.setFill()
-        fillPath.fill()
-    }
-
-    private static func drawIndicator(atX x: CGFloat, state: CursorConnectionState) {
-        guard state != .connected else { return }
-
-        let indicatorRect = NSRect(x: x, y: 6, width: 4, height: 4)
-        let indicatorPath = NSBezierPath(ovalIn: indicatorRect)
-        indicatorColor(for: state).setFill()
-        indicatorPath.fill()
-    }
-
-    private static func indicatorColor(for state: CursorConnectionState) -> NSColor {
-        switch state {
-        case .authExpired, .syncFailed:
-            return .systemOrange
-        case .disconnected:
-            return .systemYellow
-        case .connected:
-            return .clear
-        }
     }
 }
