@@ -1,5 +1,5 @@
 # Screenshots
 
-These screenshots use synthetic plan labels, percentages, and timestamps so public documentation never exposes a real provider account, usage level, cookie, or session detail.
+These screenshots are real captures of AIMeter's current macOS menu bar dashboard and settings window.
 
-When replacing them with captured screenshots, redact all personal usage details before committing.
+When replacing them, avoid committing personal account details, cookies, billing information, or anything that should not be public.

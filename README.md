@@ -6,7 +6,7 @@ AIMeter is a minimal macOS menu bar app for tracking personal Cursor plan usage 
 
 > AIMeter is an experimental, unofficial Cursor integration. It does not use Cursor APIs, and it may need updates when Cursor changes its account pages.
 
-![AIMeter menu bar dashboard screenshot](docs/screenshots/menu-popover.svg)
+![AIMeter menu bar dashboard screenshot](docs/screenshots/menu-popover.png)
 
 ## Highlights
 
@@ -19,9 +19,9 @@ AIMeter is a minimal macOS menu bar app for tracking personal Cursor plan usage 
 
 | Dashboard | Settings |
 | --- | --- |
-| ![AIMeter dashboard](docs/screenshots/menu-popover.svg) | ![AIMeter settings](docs/screenshots/settings.svg) |
+| ![AIMeter dashboard](docs/screenshots/menu-popover.png) | ![AIMeter settings](docs/screenshots/settings.png) |
 
-The screenshots use synthetic data so public documentation never exposes personal usage details.
+The screenshots show the current macOS menu bar dashboard and settings window.
 
 ## Install
 
@@ -33,7 +33,7 @@ The screenshots use synthetic data so public documentation never exposes persona
 4. Drag `AIMeter` into `Applications`.
 5. Launch `AIMeter` from `Applications`.
 
-AIMeter is a menu bar app, so it does not appear in the Dock. After launch, look for the small usage percentage in the macOS menu bar.
+AIMeter is a menu bar app, so it does not appear in the Dock. After launch, look for the small progress bar in the macOS menu bar.
 
 ### First Setup
 
@@ -42,7 +42,7 @@ AIMeter is a menu bar app, so it does not appear in the Dock. After launch, look
 3. Sign in to Cursor in the connection window.
 4. AIMeter closes the connection window after it detects your usage data.
 
-If the menu bar is crowded, macOS may hide some menu bar apps. AIMeter uses a compact percentage-only menu bar item, but you may still need to reduce other menu bar items or open Control Center/Menu Bar settings.
+If the menu bar is crowded, macOS may hide some menu bar apps. AIMeter uses a compact progress-bar menu item, but you may still need to reduce other menu bar items or open Control Center/Menu Bar settings.
 
 ### Update
 
