@@ -12,10 +12,8 @@ AIMeter is a minimal macOS menu bar app for tracking personal Cursor plan usage 
 
 - Native macOS menu bar utility with no Dock icon.
 - Tracks Cursor total, Auto, and API usage.
-- Uses a local `WKWebView` session, so no provider API keys are required.
+- Uses a local Cursor web session, so no API key is required.
 - Keeps the latest successful usage snapshot visible if a background refresh fails.
-- Includes parser and coordinator tests for Cursor page changes.
-- Ships with a DMG build script and optional Apple notarization flow.
 
 ## Screenshots
 
@@ -25,123 +23,64 @@ AIMeter is a minimal macOS menu bar app for tracking personal Cursor plan usage 
 
 The screenshots use synthetic data so public documentation never exposes personal usage details.
 
+## Install
+
+### Download The App
+
+1. Open the latest [GitHub Release](https://github.com/divyanshub024/aimeter/releases).
+2. Download `AIMeter.dmg`.
+3. Open the DMG.
+4. Drag `AIMeter` into `Applications`.
+5. Launch `AIMeter` from `Applications`.
+
+AIMeter is a menu bar app, so it does not appear in the Dock. After launch, look for the small usage percentage in the macOS menu bar.
+
+### First Setup
+
+1. Click the AIMeter menu bar item.
+2. Click `Connect Cursor`.
+3. Sign in to Cursor in the connection window.
+4. AIMeter closes the connection window after it detects your usage data.
+
+If the menu bar is crowded, macOS may hide some menu bar apps. AIMeter uses a compact percentage-only menu bar item, but you may still need to reduce other menu bar items or open Control Center/Menu Bar settings.
+
+### Update
+
+Download the newer `AIMeter.dmg` from GitHub Releases, drag the new `AIMeter` app into `Applications`, and replace the old copy.
+
+## How It Works
+
+AIMeter reads the same Cursor usage information you can see after signing in on Cursor's account/settings pages.
+
+- It opens Cursor in a local browser view owned by AIMeter.
+- Your Cursor sign-in stays local to AIMeter.
+- AIMeter only loads Cursor pages from `cursor.com` and `www.cursor.com`.
+- It reads the usage values shown by Cursor and displays them in the menu bar.
+- It keeps the latest successful snapshot visible if a later refresh fails.
+- It never sends your usage data to an AIMeter server.
+
+Disconnecting Cursor from AIMeter clears the app's local Cursor sign-in data. Cursor sessions can still expire normally, in which case AIMeter will ask you to reconnect.
+
 ## What AIMeter Tracks
 
 | Provider | Metrics |
 | --- | --- |
 | Cursor | Plan label, total usage percentage, Auto usage percentage, API usage percentage |
 
-## Privacy Model
+## Privacy
 
-AIMeter stores Cursor login state inside the app's local WebKit website data store. It does not ask for API keys and does not send usage data to an AIMeter server.
+AIMeter stores Cursor login state locally on your Mac. It does not ask for API keys and does not send usage data to an AIMeter server.
 
 Important notes:
 
 - AIMeter only loads HTTPS Cursor pages from `cursor.com` or `www.cursor.com`.
-- Network response parsing is host-filtered to Cursor pages and caps captured response bodies at 50 KB.
 - Cursor sessions can expire and require reconnecting.
-- Disconnecting Cursor clears its local WebKit website data for AIMeter.
+- Disconnecting Cursor clears AIMeter's local Cursor sign-in data.
 - Do not include personal account data, cookies, or unredacted screenshots in issues or pull requests.
 
 ## Requirements
 
 - macOS 14 or newer
-- Xcode 26.2 or newer
-- Xcode command line tools
-- [XcodeGen](https://github.com/yonaskolb/XcodeGen)
-
-Install XcodeGen:
-
-```bash
-brew install xcodegen
-```
-
-## Build From Source
-
-From the repository root:
-
-```bash
-xcodegen generate
-xcodebuild -project AIMeter.xcodeproj -scheme AIMeter -destination "platform=macOS" -derivedDataPath ./.derived build
-```
-
-Run the app:
-
-```bash
-open ./.derived/Build/Products/Debug/AIMeter.app
-```
-
-The app runs as an `LSUIElement` menu bar utility, so it appears in the menu bar instead of the Dock.
-
-## Connect Accounts
-
-1. Launch AIMeter.
-2. Open the menu bar popover.
-3. Click `Connect Cursor` and sign in inside the Cursor connection window.
-4. AIMeter closes the connection window once it detects usage data and then refreshes in the background.
-
-## Test
-
-```bash
-xcodebuild -project AIMeter.xcodeproj -scheme AIMeter -destination "platform=macOS" -derivedDataPath ./.derived test
-```
-
-## Package A Release
-
-Build a local unsigned DMG for testing:
-
-```bash
-./scripts/build_dmg.sh
-```
-
-The output is written to:
-
-```text
-dist/AIMeter.dmg
-```
-
-Unsigned local DMGs are convenient for development, but macOS Gatekeeper will warn users that Apple cannot verify the app. Public releases should be signed, notarized, and stapled.
-
-Build a signed and notarized DMG with a saved notary profile:
-
-```bash
-DEVELOPMENT_TEAM=TEAMID1234 \
-NOTARYTOOL_PROFILE=your-profile \
-./scripts/build_dmg.sh --notarize
-```
-
-Or with direct Apple credentials:
-
-```bash
-APPLE_ID=me@example.com \
-APPLE_TEAM_ID=TEAMID1234 \
-APPLE_APP_SPECIFIC_PASSWORD=app-specific-password \
-./scripts/build_dmg.sh --notarize
-```
-
-Notarized releases also require a `Developer ID Application` certificate in your login keychain. The script verifies the app signature, signs the final DMG, uploads it to Apple, staples the ticket, and validates the result.
-
-Verify the final public DMG:
-
-```bash
-xcrun stapler validate dist/AIMeter.dmg
-spctl -a -vv --type open --context context:primary-signature dist/AIMeter.dmg
-```
-
-See [docs/release-checklist.md](docs/release-checklist.md) before publishing a GitHub release.
-
-## Project Structure
-
-```text
-Sources/AIMeter/App       App lifecycle and dependency wiring
-Sources/AIMeter/Core      Shared models, formatting, stores, and parser helpers
-Sources/AIMeter/Cursor    Cursor web-session client, scraper, and parser
-Sources/AIMeter/Storage   UserDefaults-backed settings persistence
-Sources/AIMeter/UI        Menu bar, popover, settings, and connection windows
-Tests/AIMeterTests        Parser, coordinator, settings, and dashboard tests
-scripts                   Release packaging helpers
-docs                      Screenshots and release notes
-```
 
 ## Limitations
 
@@ -150,9 +89,9 @@ docs                      Screenshots and release notes
 - Background refresh may fail until you reconnect after session expiry.
 - Usage values are only as accurate as the Cursor pages AIMeter can read.
 
-## Contributing
+## Support
 
-Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), keep parser changes covered by tests, and avoid committing generated build products from `.derived/`, `.derived-release/`, or `dist/`.
+Open a GitHub issue if AIMeter cannot connect, the usage values look wrong, or Cursor changes its settings pages.
 
 Security-sensitive issues should be reported privately. See [SECURITY.md](SECURITY.md).
 
