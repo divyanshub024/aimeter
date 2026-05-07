@@ -3,33 +3,45 @@ import SwiftUI
 struct MenuPopoverView: View {
     @ObservedObject var dashboardStore: DashboardStore
     @ObservedObject var cursorUsageCoordinator: CursorUsageCoordinator
+    @ObservedObject var claudeUsageCoordinator: ClaudeUsageCoordinator
 
     let onRefreshCursor: () -> Void
+    let onRefreshClaude: () -> Void
     let onConnectCursor: () -> Void
+    let onConnectClaude: () -> Void
     let onDisconnectCursor: () -> Void
+    let onDisconnectClaude: () -> Void
     let onOpenSettings: () -> Void
     let onQuit: () -> Void
 
     var body: some View {
         let state = dashboardStore.state
+        let connectedSnapshots = state.connectedProviderSnapshots
+        let popoverHeight = preferredHeight(
+            state: state,
+            connectedProviderCount: connectedSnapshots.count
+        )
 
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 header
                 Divider()
 
-                if state.presentationState == .firstRun {
+                if shouldShowInitialLoading(connectedProviderCount: connectedSnapshots.count) {
+                    initialLoadingContent
+                } else if state.presentationState == .firstRun || connectedSnapshots.isEmpty {
                     firstRunContent
                 } else {
-                    cursorSection(state.cursorSnapshot)
+                    ForEach(connectedSnapshots, id: \.provider) { snapshot in
+                        providerSection(snapshot)
+                    }
                     Divider()
                     footer(state)
                 }
             }
             .padding(14)
-            .padding(.bottom, 2)
         }
-        .frame(width: 360, height: 370, alignment: .topLeading)
+        .frame(width: 380, height: popoverHeight, alignment: .topLeading)
     }
 
     private var header: some View {
@@ -38,7 +50,7 @@ struct MenuPopoverView: View {
                 Text("AIMeter")
                     .font(.headline)
                 Spacer()
-                if cursorUsageCoordinator.isRefreshing || cursorUsageCoordinator.isConnecting {
+                if isAnyProviderBusy {
                     ProgressView()
                         .controlSize(.small)
                 }
@@ -50,19 +62,50 @@ struct MenuPopoverView: View {
             }
 
             if dashboardStore.state.presentationState == .firstRun {
-                Text("Track Cursor usage from your signed-in web session.")
+                Text("Track Cursor and Claude usage from signed-in local web sessions.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
     }
 
+    private var isAnyProviderBusy: Bool {
+        cursorUsageCoordinator.isRefreshing ||
+            cursorUsageCoordinator.isConnecting ||
+            claudeUsageCoordinator.isRefreshing ||
+            claudeUsageCoordinator.isConnecting
+    }
+
+    private var isAnyProviderRefreshing: Bool {
+        cursorUsageCoordinator.isRefreshing || claudeUsageCoordinator.isRefreshing
+    }
+
+    private var hasLoadedProviderState: Bool {
+        cursorUsageCoordinator.hasLoadedOnce && claudeUsageCoordinator.hasLoadedOnce
+    }
+
+    private func shouldShowInitialLoading(connectedProviderCount: Int) -> Bool {
+        connectedProviderCount == 0 &&
+            (isAnyProviderRefreshing || !hasLoadedProviderState)
+    }
+
+    private func preferredHeight(
+        state: DashboardState,
+        connectedProviderCount: Int
+    ) -> CGFloat {
+        if state.presentationState == .firstRun || connectedProviderCount == 0 {
+            return 420
+        }
+
+        return connectedProviderCount == 1 ? 370 : 560
+    }
+
     private var firstRunContent: some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Connect Cursor")
+                Text("Connect a Provider")
                     .font(.title3.weight(.semibold))
-                Text("AIMeter reads usage from your signed-in Cursor settings dashboard. No API key is required.")
+                Text("AIMeter reads usage from signed-in provider pages. No API key is required.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -73,6 +116,13 @@ struct MenuPopoverView: View {
                 action: onConnectCursor
             )
 
+            onboardingTile(
+                provider: .claude,
+                description: "Track Claude usage, limits, and reset information when Claude exposes it in your account session.",
+                buttonTitle: "Connect Claude",
+                action: onConnectClaude
+            )
+
             HStack {
                 Spacer()
                 Button("Quit", action: onQuit)
@@ -81,48 +131,99 @@ struct MenuPopoverView: View {
         }
     }
 
-    private func cursorSection(_ snapshot: CursorUsageSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private var initialLoadingContent: some View {
+        VStack(spacing: 12) {
+            Spacer(minLength: 76)
+            ProgressView()
+                .controlSize(.regular)
+            Text("Checking connected sessions...")
+                .font(.headline)
+            Text("AIMeter is loading saved Cursor and Claude sessions.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Spacer(minLength: 76)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func providerSection(_ snapshot: ProviderUsageSnapshot) -> some View {
+        let statusMetrics = displayStatusMetrics(for: snapshot)
+        let usageMetrics = displayUsageMetrics(for: snapshot)
+        let primaryResetText = primaryResetText(for: snapshot, statusMetrics: statusMetrics)
+        let unpairedStatusMetrics = unpairedStatusMetrics(
+            statusMetrics,
+            snapshot: snapshot,
+            usageMetrics: usageMetrics
+        )
+
+        return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Cursor")
+                    Text(snapshot.provider.displayName)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Text(snapshot.planLabel)
                         .font(.title3.weight(.semibold))
                     Text(snapshot.connectionState.displayText)
                         .font(.caption)
-                        .foregroundStyle(cursorStatusColor(for: snapshot.connectionState))
+                        .foregroundStyle(providerStatusColor(for: snapshot.connectionState))
                 }
                 Spacer()
-                Text(DisplayFormatting.percent(snapshot.totalUsedPercent))
+                Text(snapshot.primaryMetric.value)
                     .font(.title3.weight(.semibold))
                     .monospacedDigit()
+                    .multilineTextAlignment(.trailing)
+                    .lineLimit(3)
             }
 
-            ProgressView(value: snapshot.totalUsedPercent / 100)
-                .tint(cursorProgressColor(for: snapshot.totalUsedPercent))
+            if let progressPercent = snapshot.progressPercent {
+                ProgressView(value: progressPercent / 100)
+                    .tint(providerProgressColor(for: progressPercent))
+            }
 
-            HStack(spacing: 10) {
-                metricCard(title: "Auto", value: DisplayFormatting.percent(snapshot.autoUsedPercent))
-                metricCard(title: "API", value: DisplayFormatting.percent(snapshot.apiUsedPercent))
+            if let primaryResetText {
+                Text(primaryResetText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            if !unpairedStatusMetrics.isEmpty {
+                VStack(alignment: .leading, spacing: 3) {
+                    ForEach(unpairedStatusMetrics, id: \.title) { metric in
+                        statusMetricLine(metric)
+                    }
+                }
+            }
+
+            if !usageMetrics.isEmpty {
+                HStack(spacing: 10) {
+                    ForEach(usageMetrics, id: \.title) { metric in
+                        metricCard(
+                            title: metric.title,
+                            value: metric.value,
+                            subtitle: resetText(for: metric, statusMetrics: statusMetrics)
+                        )
+                    }
+                }
             }
 
             providerFooter(
                 lastSync: snapshot.fetchedAt,
-                message: cursorMessage(for: snapshot.connectionState)
+                message: providerMessage(for: snapshot)
             )
 
             HStack {
-                Button("Refresh", action: onRefreshCursor)
+                Button("Refresh", action: actions(for: snapshot.provider).refresh)
                     .buttonStyle(.bordered)
-                    .disabled(cursorUsageCoordinator.isRefreshing || cursorUsageCoordinator.isConnecting)
+                    .disabled(coordinator(for: snapshot.provider).isRefreshing || coordinator(for: snapshot.provider).isConnecting)
 
-                Button(cursorConnectButtonTitle(for: snapshot), action: onConnectCursor)
+                Button(connectButtonTitle(for: snapshot), action: actions(for: snapshot.provider).connect)
                     .buttonStyle(.borderedProminent)
-                    .disabled(cursorUsageCoordinator.isConnecting)
+                    .disabled(coordinator(for: snapshot.provider).isConnecting)
 
-                Button("Disconnect", action: onDisconnectCursor)
+                Button("Disconnect", action: actions(for: snapshot.provider).disconnect)
                     .buttonStyle(.bordered)
                     .disabled(snapshot.connectionState == .disconnected)
             }
@@ -132,6 +233,77 @@ struct MenuPopoverView: View {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color(nsColor: .controlBackgroundColor))
         )
+    }
+
+    private func displayUsageMetrics(for snapshot: ProviderUsageSnapshot) -> [UsageMetric] {
+        let metrics = snapshot.secondaryMetrics.filter { $0.percent != nil }
+        guard snapshot.provider == .claude else {
+            return metrics.removingDuplicateTitles()
+        }
+
+        return ["All models", "Claude Design"].compactMap { title in
+            metrics.first { $0.title.caseInsensitiveCompare(title) == .orderedSame }
+        }
+    }
+
+    private func displayStatusMetrics(for snapshot: ProviderUsageSnapshot) -> [UsageMetric] {
+        let metrics = snapshot.secondaryMetrics.filter { $0.percent == nil }
+        guard snapshot.provider == .claude else {
+            return metrics.removingDuplicateTitles()
+        }
+
+        let titles = ["Reset", "All models reset", "Claude Design reset"]
+        return titles.compactMap { title in
+            metrics.first { $0.title.caseInsensitiveCompare(title) == .orderedSame }
+        }
+    }
+
+    private func statusMetricLine(_ metric: UsageMetric) -> some View {
+        HStack(spacing: 6) {
+            Text(metric.title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(metric.value)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+    }
+
+    private func primaryResetText(
+        for snapshot: ProviderUsageSnapshot,
+        statusMetrics: [UsageMetric]
+    ) -> String? {
+        statusMetrics.first { metric in
+            metric.title.caseInsensitiveCompare("Reset") == .orderedSame ||
+                metric.title.caseInsensitiveCompare("\(snapshot.primaryMetric.title) reset") == .orderedSame
+        }?.value
+    }
+
+    private func resetText(
+        for usageMetric: UsageMetric,
+        statusMetrics: [UsageMetric]
+    ) -> String? {
+        statusMetrics.first { metric in
+            metric.title.caseInsensitiveCompare("\(usageMetric.title) reset") == .orderedSame
+        }?.value
+    }
+
+    private func unpairedStatusMetrics(
+        _ statusMetrics: [UsageMetric],
+        snapshot: ProviderUsageSnapshot,
+        usageMetrics: [UsageMetric]
+    ) -> [UsageMetric] {
+        statusMetrics.filter { metric in
+            if metric.title.caseInsensitiveCompare("Reset") == .orderedSame ||
+                metric.title.caseInsensitiveCompare("\(snapshot.primaryMetric.title) reset") == .orderedSame {
+                return false
+            }
+
+            return !usageMetrics.contains { usageMetric in
+                metric.title.caseInsensitiveCompare("\(usageMetric.title) reset") == .orderedSame
+            }
+        }
     }
 
     private func footer(_ state: DashboardState) -> some View {
@@ -146,6 +318,7 @@ struct MenuPopoverView: View {
     }
 
     private func onboardingTile(
+        provider: UsageProvider = .cursor,
         description: String,
         buttonTitle: String,
         action: @escaping () -> Void
@@ -153,9 +326,9 @@ struct MenuPopoverView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Circle()
-                    .fill(Color.blue)
+                    .fill(provider == .cursor ? Color.blue : Color.purple)
                     .frame(width: 8, height: 8)
-                Text("Cursor")
+                Text(provider.displayName)
                     .font(.headline)
             }
 
@@ -174,7 +347,7 @@ struct MenuPopoverView: View {
         )
     }
 
-    private func metricCard(title: String, value: String) -> some View {
+    private func metricCard(title: String, value: String, subtitle: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.caption)
@@ -182,6 +355,14 @@ struct MenuPopoverView: View {
             Text(value)
                 .font(.title3.weight(.semibold))
                 .monospacedDigit()
+                .lineLimit(2)
+            if let subtitle {
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
@@ -206,29 +387,29 @@ struct MenuPopoverView: View {
         }
     }
 
-    private func cursorConnectButtonTitle(for snapshot: CursorUsageSnapshot) -> String {
+    private func connectButtonTitle(for snapshot: ProviderUsageSnapshot) -> String {
         switch snapshot.connectionState {
         case .connected:
             return "Reconnect"
         case .disconnected, .authExpired, .syncFailed:
-            return "Connect Cursor"
+            return "Connect \(snapshot.provider.displayName)"
         }
     }
 
-    private func cursorMessage(for state: CursorConnectionState) -> String? {
-        switch state {
+    private func providerMessage(for snapshot: ProviderUsageSnapshot) -> String? {
+        switch snapshot.connectionState {
         case .connected:
             return nil
         case .authExpired:
-            return "Reconnect Cursor to refresh the dashboard."
+            return "Reconnect \(snapshot.provider.displayName) to refresh usage."
         case .disconnected:
-            return "Connect your Cursor account to start tracking usage."
+            return "Connect \(snapshot.provider.displayName) to start tracking usage."
         case .syncFailed(let reason):
             return reason
         }
     }
 
-    private func cursorProgressColor(for percent: Double) -> Color {
+    private func providerProgressColor(for percent: Double) -> Color {
         switch percent {
         case 90...:
             return .red
@@ -239,7 +420,7 @@ struct MenuPopoverView: View {
         }
     }
 
-    private func cursorStatusColor(for state: CursorConnectionState) -> Color {
+    private func providerStatusColor(for state: ProviderConnectionState) -> Color {
         switch state {
         case .connected:
             return .green
@@ -247,6 +428,33 @@ struct MenuPopoverView: View {
             return .secondary
         case .authExpired, .syncFailed:
             return .orange
+        }
+    }
+
+    private func coordinator(for provider: UsageProvider) -> ProviderUsageCoordinator {
+        switch provider {
+        case .cursor:
+            return cursorUsageCoordinator
+        case .claude:
+            return claudeUsageCoordinator
+        }
+    }
+
+    private func actions(for provider: UsageProvider) -> (refresh: () -> Void, connect: () -> Void, disconnect: () -> Void) {
+        switch provider {
+        case .cursor:
+            return (onRefreshCursor, onConnectCursor, onDisconnectCursor)
+        case .claude:
+            return (onRefreshClaude, onConnectClaude, onDisconnectClaude)
+        }
+    }
+}
+
+private extension Array where Element == UsageMetric {
+    func removingDuplicateTitles() -> [UsageMetric] {
+        var seen: Set<String> = []
+        return filter { metric in
+            seen.insert(metric.title.lowercased()).inserted
         }
     }
 }

@@ -28,7 +28,8 @@ final class SettingsStore: ObservableObject {
             settings = AppSettings(
                 pollIntervalSeconds: 300,
                 hasCompletedInitialSetup: false,
-                cursor: decoded.mergedWithDefaults
+                cursor: decoded.mergedWithDefaults,
+                claude: .default
             )
         } else {
             settings = .default
@@ -51,6 +52,10 @@ final class SettingsStore: ObservableObject {
         settings.cursor.usagePageURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    func setClaudeUsagePageURL(_ url: String) {
+        settings.claude.usagePageURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     private func persist() {
         guard let encoded = try? JSONEncoder().encode(settings) else {
             return
@@ -65,7 +70,8 @@ private extension AppSettings {
         AppSettings(
             pollIntervalSeconds: max(300, pollIntervalSeconds),
             hasCompletedInitialSetup: hasCompletedInitialSetup,
-            cursor: cursor.mergedWithDefaults
+            cursor: cursor.mergedWithDefaults,
+            claude: claude.mergedWithDefaults
         )
     }
 }
@@ -74,6 +80,14 @@ private extension CursorSettings {
     var mergedWithDefaults: CursorSettings {
         CursorSettings(
             usagePageURL: CursorURLValidator.sanitizedUsageURL(usagePageURL)
+        )
+    }
+}
+
+private extension ClaudeSettings {
+    var mergedWithDefaults: ClaudeSettings {
+        ClaudeSettings(
+            usagePageURL: ClaudeURLValidator.sanitizedUsageURL(usagePageURL)
         )
     }
 }

@@ -11,7 +11,9 @@ struct AIMeterApp: App {
             SettingsView(
                 settingsStore: environment.settingsStore,
                 dashboardStore: environment.dashboardStore,
-                cursorUsageCoordinator: environment.cursorUsageCoordinator
+                cursorUsageCoordinator: environment.cursorUsageCoordinator,
+                claudeUsageCoordinator: environment.claudeUsageCoordinator,
+                launchAtLoginController: environment.launchAtLoginController
             )
         }
     }

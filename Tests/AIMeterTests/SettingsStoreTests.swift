@@ -46,4 +46,32 @@ final class SettingsStoreTests: XCTestCase {
 
         XCTAssertEqual(store.settings.cursor.usagePageURL, CursorSettings.default.usagePageURL)
     }
+
+    func testExistingSettingsWithoutClaudeKeepCursorConfiguration() throws {
+        let suiteName = #function
+        let userDefaults = UserDefaults(suiteName: suiteName)!
+        userDefaults.removePersistentDomain(forName: suiteName)
+
+        let encoded = try JSONEncoder().encode(
+            LegacyAppSettings(
+                pollIntervalSeconds: 600,
+                hasCompletedInitialSetup: true,
+                cursor: CursorSettings(usagePageURL: "https://cursor.com/settings/account")
+            )
+        )
+        userDefaults.set(encoded, forKey: "aimeter.settings")
+
+        let store = SettingsStore(userDefaults: userDefaults)
+
+        XCTAssertEqual(store.settings.pollIntervalSeconds, 600)
+        XCTAssertTrue(store.settings.hasCompletedInitialSetup)
+        XCTAssertEqual(store.settings.cursor.usagePageURL, "https://cursor.com/settings/account")
+        XCTAssertEqual(store.settings.claude, .default)
+    }
+}
+
+private struct LegacyAppSettings: Codable {
+    let pollIntervalSeconds: TimeInterval
+    let hasCompletedInitialSetup: Bool
+    let cursor: CursorSettings
 }
