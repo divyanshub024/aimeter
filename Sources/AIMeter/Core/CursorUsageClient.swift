@@ -28,7 +28,7 @@ enum ProviderUsageError: LocalizedError, Equatable {
         case .syncFailed(let message):
             return message
         case .cancelled:
-            return "Connection window closed before Cursor finished loading."
+            return "Connection window closed before the provider finished loading."
         }
     }
 

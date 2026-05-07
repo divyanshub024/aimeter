@@ -15,6 +15,7 @@ final class ClaudeSessionManager: ClaudeSessionManaging {
     private let dataStore: WKWebsiteDataStore
     private var connectionWindowController: UsageConnectionWindowController?
     private var activeScraper: ClaudeWebViewScraper?
+    private var websiteDataCleanupTask: Task<Void, Never>?
 
     private(set) var isConnected = false
 
@@ -27,6 +28,8 @@ final class ClaudeSessionManager: ClaudeSessionManaging {
     }
 
     func connect(to usagePageURL: URL) async throws -> ProviderUsageSnapshot {
+        await waitForWebsiteDataCleanup()
+
         let scraper = ClaudeWebViewScraper(mode: .interactive, usagePageURL: usagePageURL, dataStore: dataStore)
         let windowController = UsageConnectionWindowController(title: "Connect Claude", webView: scraper.webView)
 
@@ -53,6 +56,8 @@ final class ClaudeSessionManager: ClaudeSessionManaging {
     }
 
     func fetchUsage(from usagePageURL: URL) async throws -> ProviderUsageSnapshot {
+        await waitForWebsiteDataCleanup()
+
         let scraper = ClaudeWebViewScraper(mode: .background, usagePageURL: usagePageURL, dataStore: dataStore)
         activeScraper = scraper
         defer { activeScraper = nil }
@@ -65,16 +70,39 @@ final class ClaudeSessionManager: ClaudeSessionManaging {
         isConnected = false
         activeScraper?.cancel()
         connectionWindowController?.close()
-        clearWebsiteData()
+        startWebsiteDataCleanup()
     }
 
-    private func clearWebsiteData() {
+    private func startWebsiteDataCleanup() {
+        guard websiteDataCleanupTask == nil else {
+            return
+        }
+
+        websiteDataCleanupTask = Task { [dataStore] in
+            await Self.clearWebsiteData(in: dataStore)
+        }
+    }
+
+    private func waitForWebsiteDataCleanup() async {
+        guard let websiteDataCleanupTask else {
+            return
+        }
+
+        await websiteDataCleanupTask.value
+        self.websiteDataCleanupTask = nil
+    }
+
+    private static func clearWebsiteData(in dataStore: WKWebsiteDataStore) async {
         let types = WKWebsiteDataStore.allWebsiteDataTypes()
-        dataStore.fetchDataRecords(ofTypes: types) { [dataStore] records in
-            let claudeRecords = records.filter { record in
-                record.displayName.localizedCaseInsensitiveContains("claude")
+        await withCheckedContinuation { continuation in
+            dataStore.fetchDataRecords(ofTypes: types) { records in
+                let claudeRecords = records.filter { record in
+                    record.displayName.localizedCaseInsensitiveContains("claude")
+                }
+                dataStore.removeData(ofTypes: types, for: claudeRecords) {
+                    continuation.resume()
+                }
             }
-            dataStore.removeData(ofTypes: types, for: claudeRecords) {}
         }
     }
 }

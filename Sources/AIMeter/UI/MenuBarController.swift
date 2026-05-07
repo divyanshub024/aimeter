@@ -133,10 +133,23 @@ final class MenuBarController {
     }
 
     private func primaryConnectionState(for state: DashboardState) -> ProviderConnectionState {
-        let connectedWithProgress = state.connectedProviderSnapshots
-            .filter { $0.connectionState == .connected && $0.progressPercent != nil }
+        let snapshots = state.connectedProviderSnapshots
 
-        if !connectedWithProgress.isEmpty {
+        if snapshots.contains(where: { $0.connectionState == .authExpired }) {
+            return .authExpired
+        }
+
+        if let syncFailedState = snapshots.compactMap({ snapshot -> ProviderConnectionState? in
+            if case .syncFailed = snapshot.connectionState {
+                return snapshot.connectionState
+            }
+
+            return nil
+        }).first {
+            return syncFailedState
+        }
+
+        if snapshots.contains(where: { $0.connectionState == .connected && $0.progressPercent != nil }) {
             return .connected
         }
 

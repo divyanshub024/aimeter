@@ -251,11 +251,14 @@ struct DashboardState: Equatable {
     }
 
     var connectedProviderSnapshots: [ProviderUsageSnapshot] {
-        providerSnapshots.filter { $0.connectionState == .connected }
+        providerSnapshots.filter { $0.connectionState != .disconnected }
     }
 
     var menuBarProgressPercent: Double {
-        connectedProviderSnapshots.compactMap(\.progressPercent).max() ?? 0
+        providerSnapshots
+            .filter { $0.connectionState == .connected }
+            .compactMap(\.progressPercent)
+            .max() ?? 0
     }
 
     private func snapshot(for provider: UsageProvider) -> ProviderUsageSnapshot {

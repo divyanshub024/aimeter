@@ -1,5 +1,6 @@
 import AppKit
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let environment = AppEnvironment.shared
@@ -9,9 +10,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        Task { @MainActor in
-            AppEnvironment.shared.cursorUsageCoordinator.stop()
-            AppEnvironment.shared.claudeUsageCoordinator.stop()
-        }
+        let environment = AppEnvironment.shared
+        environment.cursorUsageCoordinator.stop()
+        environment.claudeUsageCoordinator.stop()
     }
 }

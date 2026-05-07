@@ -218,7 +218,7 @@ final class DashboardStoreTests: XCTestCase {
             lastRefreshAt: Date(timeIntervalSince1970: 200)
         )
 
-        XCTAssertEqual(state.connectedProviderSnapshots.map(\.provider), [.cursor])
+        XCTAssertEqual(state.connectedProviderSnapshots.map(\.provider), [.cursor, .claude])
         XCTAssertEqual(state.menuBarProgressPercent, 19, accuracy: 0.01)
     }
 }

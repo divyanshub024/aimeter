@@ -20,7 +20,7 @@ enum ClaudeURLValidator {
             return ClaudeSettings.default.usagePageURL
         }
 
-        let path = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let path = url.path(percentEncoded: false).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         if path.isEmpty {
             return ClaudeSettings.default.usagePageURL
         }
@@ -41,7 +41,9 @@ enum ClaudeURLValidator {
             return false
         }
 
-        return url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased() == "settings/usage"
+        return url.path(percentEncoded: false)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            .lowercased() == "settings/usage"
     }
 
     static func isAllowedClaudeURL(_ url: URL) -> Bool {
@@ -49,7 +51,7 @@ enum ClaudeURLValidator {
             return false
         }
 
-        guard url.user == nil, url.password == nil else {
+        guard url.user(percentEncoded: false) == nil, url.password(percentEncoded: false) == nil else {
             return false
         }
 
@@ -57,7 +59,7 @@ enum ClaudeURLValidator {
             return false
         }
 
-        guard let host = url.host?.lowercased() else {
+        guard let host = url.host(percentEncoded: false)?.lowercased() else {
             return false
         }
 
