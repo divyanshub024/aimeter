@@ -41,18 +41,14 @@ final class ClaudeSessionManager: ClaudeSessionManaging {
         windowController.show()
 
         defer {
+            windowController.close()
             activeScraper = nil
             connectionWindowController = nil
         }
 
-        do {
-            let snapshot = try await scraper.start()
-            isConnected = true
-            windowController.close()
-            return snapshot
-        } catch {
-            throw error
-        }
+        let snapshot = try await scraper.start()
+        isConnected = true
+        return snapshot
     }
 
     func fetchUsage(from usagePageURL: URL) async throws -> ProviderUsageSnapshot {
