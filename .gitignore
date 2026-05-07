@@ -2,6 +2,7 @@
 .derived/
 .derived-release/
 dist/
+scripts/
 DerivedData/
 .build/
 .swiftpm/
