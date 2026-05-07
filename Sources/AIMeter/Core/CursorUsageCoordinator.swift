@@ -1,20 +1,25 @@
 import Foundation
 
 @MainActor
-final class CursorUsageCoordinator: ObservableObject {
-    @Published private(set) var snapshot: CursorUsageSnapshot = .disconnected
+final class ProviderUsageCoordinator: ObservableObject {
+    @Published private(set) var snapshot: ProviderUsageSnapshot
     @Published private(set) var isRefreshing = false
     @Published private(set) var isConnecting = false
+    @Published private(set) var hasLoadedOnce = false
+
+    let provider: UsageProvider
 
     private let settingsStore: SettingsStore
-    private let client: CursorUsageClient
+    private let client: ProviderUsageClient
 
     private var refreshTask: Task<Void, Never>?
-    private var lastSuccessfulSnapshot: CursorUsageSnapshot?
+    private var lastSuccessfulSnapshot: ProviderUsageSnapshot?
 
-    init(settingsStore: SettingsStore, client: CursorUsageClient) {
+    init(settingsStore: SettingsStore, client: ProviderUsageClient) {
         self.settingsStore = settingsStore
         self.client = client
+        self.provider = client.provider
+        self.snapshot = DashboardState.defaultSnapshot(for: client.provider)
     }
 
     func start() {
@@ -49,18 +54,21 @@ final class CursorUsageCoordinator: ObservableObject {
 
         do {
             try await client.connect()
-            await refresh()
-        } catch let error as CursorUsageError {
+            try await fetchAndStoreSnapshot()
+            hasLoadedOnce = true
+        } catch let error as ProviderUsageError {
             applyFailureState(error.connectionState)
+            hasLoadedOnce = true
         } catch {
             applyFailureState(.syncFailed(reason: error.localizedDescription))
+            hasLoadedOnce = true
         }
     }
 
     func disconnect() {
         client.disconnect()
         lastSuccessfulSnapshot = nil
-        snapshot = .disconnected
+        snapshot = DashboardState.defaultSnapshot(for: provider)
     }
 
     func refresh() async {
@@ -69,24 +77,34 @@ final class CursorUsageCoordinator: ObservableObject {
         }
 
         isRefreshing = true
-        defer { isRefreshing = false }
+        defer {
+            isRefreshing = false
+            hasLoadedOnce = true
+        }
 
         do {
-            let fetched = try await client.fetchUsage()
-            snapshot = fetched
-            lastSuccessfulSnapshot = fetched
-        } catch let error as CursorUsageError {
+            try await fetchAndStoreSnapshot()
+        } catch let error as ProviderUsageError {
             applyFailureState(error.connectionState)
         } catch {
             applyFailureState(.syncFailed(reason: error.localizedDescription))
         }
     }
 
-    private func applyFailureState(_ state: CursorConnectionState) {
+    private func fetchAndStoreSnapshot() async throws {
+        let fetched = try await client.fetchUsage()
+        snapshot = fetched
+        lastSuccessfulSnapshot = fetched
+    }
+
+    private func applyFailureState(_ state: ProviderConnectionState) {
         if let lastSuccessfulSnapshot {
             snapshot = lastSuccessfulSnapshot.withConnectionState(state)
         } else {
-            snapshot = CursorUsageSnapshot.disconnected.withConnectionState(state)
+            snapshot = DashboardState.defaultSnapshot(for: provider).withConnectionState(state)
         }
     }
 }
+
+typealias CursorUsageCoordinator = ProviderUsageCoordinator
+typealias ClaudeUsageCoordinator = ProviderUsageCoordinator

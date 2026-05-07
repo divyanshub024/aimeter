@@ -1,13 +1,16 @@
 import Foundation
 
 @MainActor
-protocol CursorUsageClient {
+protocol ProviderUsageClient {
+    var provider: UsageProvider { get }
     func connect() async throws
-    func fetchUsage() async throws -> CursorUsageSnapshot
+    func fetchUsage() async throws -> ProviderUsageSnapshot
     func disconnect()
 }
 
-enum CursorUsageError: LocalizedError, Equatable {
+typealias CursorUsageClient = ProviderUsageClient
+
+enum ProviderUsageError: LocalizedError, Equatable {
     case invalidConfiguration(String)
     case disconnected
     case authExpired
@@ -19,9 +22,9 @@ enum CursorUsageError: LocalizedError, Equatable {
         case .invalidConfiguration(let message):
             return "Invalid configuration: \(message)"
         case .disconnected:
-            return "Cursor is not connected"
+            return "Provider is not connected"
         case .authExpired:
-            return "Cursor session expired. Reconnect to continue."
+            return "Session expired. Reconnect to continue."
         case .syncFailed(let message):
             return message
         case .cancelled:
@@ -29,7 +32,7 @@ enum CursorUsageError: LocalizedError, Equatable {
         }
     }
 
-    var connectionState: CursorConnectionState {
+    var connectionState: ProviderConnectionState {
         switch self {
         case .disconnected, .cancelled:
             return .disconnected
@@ -40,3 +43,5 @@ enum CursorUsageError: LocalizedError, Equatable {
         }
     }
 }
+
+typealias CursorUsageError = ProviderUsageError

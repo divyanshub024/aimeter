@@ -6,13 +6,17 @@ final class SettingsWindowController: NSWindowController {
     init(
         settingsStore: SettingsStore,
         dashboardStore: DashboardStore,
-        cursorUsageCoordinator: CursorUsageCoordinator
+        cursorUsageCoordinator: CursorUsageCoordinator,
+        claudeUsageCoordinator: ClaudeUsageCoordinator,
+        launchAtLoginController: LaunchAtLoginController
     ) {
         let hostingController = NSHostingController(
             rootView: SettingsView(
                 settingsStore: settingsStore,
                 dashboardStore: dashboardStore,
-                cursorUsageCoordinator: cursorUsageCoordinator
+                cursorUsageCoordinator: cursorUsageCoordinator,
+                claudeUsageCoordinator: claudeUsageCoordinator,
+                launchAtLoginController: launchAtLoginController
             )
         )
 

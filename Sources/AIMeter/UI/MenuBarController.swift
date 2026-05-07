@@ -6,6 +6,7 @@ import Combine
 final class MenuBarController {
     private let dashboardStore: DashboardStore
     private let cursorUsageCoordinator: CursorUsageCoordinator
+    private let claudeUsageCoordinator: ClaudeUsageCoordinator
     private let settingsWindowController: SettingsWindowController
 
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -17,10 +18,12 @@ final class MenuBarController {
     init(
         dashboardStore: DashboardStore,
         cursorUsageCoordinator: CursorUsageCoordinator,
+        claudeUsageCoordinator: ClaudeUsageCoordinator,
         settingsWindowController: SettingsWindowController
     ) {
         self.dashboardStore = dashboardStore
         self.cursorUsageCoordinator = cursorUsageCoordinator
+        self.claudeUsageCoordinator = claudeUsageCoordinator
         self.settingsWindowController = settingsWindowController
     }
 
@@ -43,19 +46,29 @@ final class MenuBarController {
     private func configurePopover() {
         popover.behavior = .applicationDefined
         popover.animates = true
-        popover.contentSize = NSSize(width: 360, height: 370)
+        popover.contentSize = preferredPopoverSize(for: dashboardStore.state)
         popover.contentViewController = NSHostingController(
             rootView: MenuPopoverView(
                 dashboardStore: dashboardStore,
                 cursorUsageCoordinator: cursorUsageCoordinator,
+                claudeUsageCoordinator: claudeUsageCoordinator,
                 onRefreshCursor: { [weak cursorUsageCoordinator] in
                     Task { await cursorUsageCoordinator?.refresh() }
+                },
+                onRefreshClaude: { [weak claudeUsageCoordinator] in
+                    Task { await claudeUsageCoordinator?.refresh() }
                 },
                 onConnectCursor: { [weak cursorUsageCoordinator] in
                     Task { await cursorUsageCoordinator?.connect() }
                 },
+                onConnectClaude: { [weak claudeUsageCoordinator] in
+                    Task { await claudeUsageCoordinator?.connect() }
+                },
                 onDisconnectCursor: { [weak cursorUsageCoordinator] in
                     cursorUsageCoordinator?.disconnect()
+                },
+                onDisconnectClaude: { [weak claudeUsageCoordinator] in
+                    claudeUsageCoordinator?.disconnect()
                 },
                 onOpenSettings: { [weak self] in
                     self?.openSettings()
@@ -78,9 +91,11 @@ final class MenuBarController {
     private func updateStatusItem(_ state: DashboardState) {
         guard let button = statusItem.button else { return }
 
+        popover.contentSize = preferredPopoverSize(for: state)
+
         button.image = StatusBarImageFactory.image(
-            progress: state.cursorSnapshot.totalUsedPercent / 100,
-            state: state.cursorSnapshot.connectionState
+            progress: state.menuBarProgressPercent / 100,
+            state: primaryConnectionState(for: state)
         )
         button.title = ""
         button.attributedTitle = NSAttributedString(string: "")
@@ -88,12 +103,44 @@ final class MenuBarController {
         button.toolTip = tooltip(for: state)
     }
 
-    private func tooltip(for state: DashboardState) -> String {
-        if state.cursorSnapshot.connectionState == .connected {
-            return "Cursor: \(DisplayFormatting.percent(state.cursorSnapshot.totalUsedPercent)) - \(state.cursorSnapshot.planLabel)"
+    private func preferredPopoverSize(for state: DashboardState) -> NSSize {
+        let connectedProviderCount = state.connectedProviderSnapshots.count
+        let height: CGFloat
+        if state.presentationState == .firstRun || connectedProviderCount == 0 {
+            height = 420
+        } else {
+            height = connectedProviderCount == 1 ? 370 : 560
         }
 
-        return "Cursor: \(state.cursorSnapshot.connectionState.displayText)"
+        return NSSize(width: 380, height: height)
+    }
+
+    private func tooltip(for state: DashboardState) -> String {
+        let connectedSnapshots = state.connectedProviderSnapshots
+        guard !connectedSnapshots.isEmpty else {
+            return "AIMeter: Connect Cursor or Claude"
+        }
+
+        return connectedSnapshots
+            .map { snapshot in
+                if let progressPercent = snapshot.progressPercent, snapshot.connectionState == .connected {
+                    return "\(snapshot.provider.displayName): \(DisplayFormatting.percent(progressPercent)) - \(snapshot.planLabel)"
+                }
+
+                return "\(snapshot.provider.displayName): \(snapshot.connectionState.displayText)"
+            }
+            .joined(separator: "\n")
+    }
+
+    private func primaryConnectionState(for state: DashboardState) -> ProviderConnectionState {
+        let connectedWithProgress = state.connectedProviderSnapshots
+            .filter { $0.connectionState == .connected && $0.progressPercent != nil }
+
+        if !connectedWithProgress.isEmpty {
+            return .connected
+        }
+
+        return .disconnected
     }
 
     @objc

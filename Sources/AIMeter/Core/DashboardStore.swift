@@ -7,39 +7,57 @@ final class DashboardStore: ObservableObject {
 
     private var cancellables: Set<AnyCancellable> = []
     private let settingsStore: SettingsStore
+    private var snapshotsByProvider: [UsageProvider: ProviderUsageSnapshot] = [:]
 
     init(
         settingsStore: SettingsStore,
-        cursorUsageCoordinator: CursorUsageCoordinator
+        cursorUsageCoordinator: CursorUsageCoordinator,
+        claudeUsageCoordinator: ClaudeUsageCoordinator? = nil
     ) {
         self.settingsStore = settingsStore
 
-        cursorUsageCoordinator.$snapshot
-            .sink { [weak self] cursorSnapshot in
-                guard let self else { return }
+        let coordinators = [cursorUsageCoordinator, claudeUsageCoordinator].compactMap { $0 }
+        for coordinator in coordinators {
+            snapshotsByProvider[coordinator.provider] = coordinator.snapshot
 
-                if !self.settingsStore.settings.hasCompletedInitialSetup,
-                   cursorSnapshot.hasSuccessfulSync {
-                    self.settingsStore.markInitialSetupComplete()
+            coordinator.$snapshot
+                .sink { [weak self] snapshot in
+                    self?.update(snapshot)
                 }
+                .store(in: &cancellables)
+        }
 
-                self.state = DashboardState(
-                    presentationState: Self.presentationState(
-                        settings: self.settingsStore.settings,
-                        cursorSnapshot: cursorSnapshot
-                    ),
-                    cursorSnapshot: cursorSnapshot,
-                    lastRefreshAt: cursorSnapshot.fetchedAt
-                )
-            }
-            .store(in: &cancellables)
+        publishState()
     }
 
-    private static func presentationState(
-        settings: AppSettings,
-        cursorSnapshot: CursorUsageSnapshot
-    ) -> DashboardPresentationState {
-        if !settings.hasCompletedInitialSetup && !cursorSnapshot.hasSuccessfulSync {
+    private func update(_ snapshot: ProviderUsageSnapshot) {
+        snapshotsByProvider[snapshot.provider] = snapshot
+
+        if !settingsStore.settings.hasCompletedInitialSetup,
+           snapshotsByProvider.values.contains(where: \.hasSuccessfulSync) {
+            settingsStore.markInitialSetupComplete()
+        }
+
+        publishState()
+    }
+
+    private func publishState() {
+        let snapshots = UsageProvider.allCases.map { provider in
+            snapshotsByProvider[provider] ?? DashboardState.defaultSnapshot(for: provider)
+        }
+
+        state = DashboardState(
+            presentationState: Self.presentationState(
+                settings: settingsStore.settings,
+                snapshots: snapshots
+            ),
+            providerSnapshots: snapshots,
+            lastRefreshAt: snapshots.compactMap(\.fetchedAt).max()
+        )
+    }
+
+    private static func presentationState(settings: AppSettings, snapshots: [ProviderUsageSnapshot]) -> DashboardPresentationState {
+        if !settings.hasCompletedInitialSetup && !snapshots.contains(where: \.hasSuccessfulSync) {
             return .firstRun
         }
 

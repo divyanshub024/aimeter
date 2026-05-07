@@ -14,11 +14,16 @@
 		171F47E1D3B27D9B6E45B003 /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD89BA7914EC59EAF85F0820 /* SettingsStoreTests.swift */; };
 		1B8E4D62F860050891233980 /* CursorUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 672713F6A8CA6AF0D040A1CA /* CursorUsageClient.swift */; };
 		2B562E1E93E18116D50951A7 /* CursorWebViewScraper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D2F543206D02BDE4304949 /* CursorWebViewScraper.swift */; };
+		2CA8FA61A5C20556C7E5D3A4 /* ClaudeDashboardClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C775C6F21F776CFC85042C2 /* ClaudeDashboardClient.swift */; };
 		33B2ADEF3FE285F96B631DF4 /* DashboardStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 857977CEBB2AD3B77F779BE0 /* DashboardStoreTests.swift */; };
 		392B056D5D3B55E9297D5BF3 /* CursorUsageCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEB145DA10301CC38697AB3 /* CursorUsageCoordinator.swift */; };
+		3F11C255F9E1FA77D2368802 /* ClaudeURLValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840E0569B54B9055EB4C02D5 /* ClaudeURLValidator.swift */; };
+		463AE1CF5D5963CD03F14394 /* ClaudeDashboardClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9147CD023202EB34E75E3244 /* ClaudeDashboardClientTests.swift */; };
 		4C8674BA33C001459514BF08 /* CursorSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9959F4FD7643E380D38B2B5 /* CursorSessionManager.swift */; };
 		55526BF3A52F07704C24CA6F /* DashboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5C6BC0AD596AED83C47006 /* DashboardStore.swift */; };
 		5DA768643675F16EAA2404C1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5F3ACF61512C6AA3A07D5 /* AppDelegate.swift */; };
+		7A41A199874C804864853F5C /* ClaudeWebViewScraper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 142F6C2B525D90B5BBA702DD /* ClaudeWebViewScraper.swift */; };
+		7B529974CA70C28055608579 /* LaunchAtLoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AED8C1F249B87F016FE1950 /* LaunchAtLoginController.swift */; };
 		885BDBCA031BC13E474E9757 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12D1FE4A45D6C309818B4D05 /* SettingsView.swift */; };
 		8E5860905ABD07228B3EA4F1 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDC614998082FB7F6D0A362 /* SettingsStore.swift */; };
 		97A1630D913120EBA9E7E173 /* CursorURLValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D5248E2FC151A9B9093ED03 /* CursorURLValidatorTests.swift */; };
@@ -26,13 +31,18 @@
 		9D686F4580BCCE8CF7D3F2DB /* CursorURLValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1492B3683D4A8F492F5B7C90 /* CursorURLValidator.swift */; };
 		AA2B2846B0C47F67E0671F16 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F9D2904EFDABD5DF920C626 /* Models.swift */; };
 		AC12B062A10A3AF4BAE1D6FF /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD218611C9E88292B6C79AB1 /* SettingsWindowController.swift */; };
+		B04C0F6AE524941B25A00C00 /* ClaudeSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C420458D523C4CEB80EC47EC /* ClaudeSessionManager.swift */; };
 		B149FFFA8A280A968A5C3F87 /* CursorDashboardParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E619902272D73EAA21BE7E86 /* CursorDashboardParserTests.swift */; };
 		B8BB5A1603DF2D7A8322889F /* DashboardParserSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31FB832DFD729D83A740E12F /* DashboardParserSupport.swift */; };
 		BEF52235F568FADD2A4AD5C9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 63F1A600E000D1329CEE977A /* Assets.xcassets */; };
 		C403835B877C1DF3D5B7A06B /* CursorUsageCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6915453C9676CDEC7C0F8D56 /* CursorUsageCoordinatorTests.swift */; };
 		C4A52A88F70241337DA598B2 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58540F84887A6CA371061D38 /* MenuBarController.swift */; };
 		CA590F245D06651252D77DD8 /* CursorDashboardClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5F8994ED80530285527F1F /* CursorDashboardClient.swift */; };
+		DB75591FE772270B8B33ADA3 /* LaunchAtLoginControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3E79D6B78A53D1211494926 /* LaunchAtLoginControllerTests.swift */; };
+		DCD70E6C8B626BC4ECC085ED /* ClaudeDashboardParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7E14839A8A946337534166A /* ClaudeDashboardParser.swift */; };
+		E0328C390C3E66C7508A5D9E /* ClaudeURLValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1142B813581A0C8C5C28CC0 /* ClaudeURLValidatorTests.swift */; };
 		E5A509FE67E9447954D7EBAE /* AIMeterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF2E78ABB85C659AC70EEC0 /* AIMeterApp.swift */; };
+		F4E60418E434356BCE5AD04C /* ClaudeDashboardParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D76EE46FC0F25079640B7181 /* ClaudeDashboardParserTests.swift */; };
 		F8D950FF33F268122E482D7C /* MenuPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF579E7263249E0D5E4240A1 /* MenuPopoverView.swift */; };
 /* End PBXBuildFile section */
 
@@ -52,12 +62,14 @@
 		0DA5F3ACF61512C6AA3A07D5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		0FF2E78ABB85C659AC70EEC0 /* AIMeterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIMeterApp.swift; sourceTree = "<group>"; };
 		12D1FE4A45D6C309818B4D05 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		142F6C2B525D90B5BBA702DD /* ClaudeWebViewScraper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeWebViewScraper.swift; sourceTree = "<group>"; };
 		1492B3683D4A8F492F5B7C90 /* CursorURLValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorURLValidator.swift; sourceTree = "<group>"; };
 		19D2F543206D02BDE4304949 /* CursorWebViewScraper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorWebViewScraper.swift; sourceTree = "<group>"; };
 		220E0695EAC46DC1F85AFF6A /* DisplayFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayFormatting.swift; sourceTree = "<group>"; };
 		2E341916E209D9871F82BB53 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		31FB832DFD729D83A740E12F /* DashboardParserSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardParserSupport.swift; sourceTree = "<group>"; };
 		3D5248E2FC151A9B9093ED03 /* CursorURLValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorURLValidatorTests.swift; sourceTree = "<group>"; };
+		4AED8C1F249B87F016FE1950 /* LaunchAtLoginController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginController.swift; sourceTree = "<group>"; };
 		58540F84887A6CA371061D38 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		63F1A600E000D1329CEE977A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		672713F6A8CA6AF0D040A1CA /* CursorUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageClient.swift; sourceTree = "<group>"; };
@@ -65,11 +77,19 @@
 		7D5EABB0A56640B955A96018 /* UsageConnectionWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageConnectionWindowController.swift; sourceTree = "<group>"; };
 		7F9D2904EFDABD5DF920C626 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		83E96E1BB6A3A7DE822932CF /* CursorDashboardParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorDashboardParser.swift; sourceTree = "<group>"; };
+		840E0569B54B9055EB4C02D5 /* ClaudeURLValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeURLValidator.swift; sourceTree = "<group>"; };
 		857977CEBB2AD3B77F779BE0 /* DashboardStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardStoreTests.swift; sourceTree = "<group>"; };
+		8C775C6F21F776CFC85042C2 /* ClaudeDashboardClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeDashboardClient.swift; sourceTree = "<group>"; };
+		9147CD023202EB34E75E3244 /* ClaudeDashboardClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeDashboardClientTests.swift; sourceTree = "<group>"; };
+		A1142B813581A0C8C5C28CC0 /* ClaudeURLValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeURLValidatorTests.swift; sourceTree = "<group>"; };
+		A7E14839A8A946337534166A /* ClaudeDashboardParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeDashboardParser.swift; sourceTree = "<group>"; };
 		AD218611C9E88292B6C79AB1 /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		AD62DCDA17582BCA7E2EDA22 /* AIMeterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AIMeterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AD89BA7914EC59EAF85F0820 /* SettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
+		B3E79D6B78A53D1211494926 /* LaunchAtLoginControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginControllerTests.swift; sourceTree = "<group>"; };
 		B83BFABBC211E9D2B6B80607 /* CursorDashboardClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorDashboardClientTests.swift; sourceTree = "<group>"; };
+		C420458D523C4CEB80EC47EC /* ClaudeSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeSessionManager.swift; sourceTree = "<group>"; };
+		D76EE46FC0F25079640B7181 /* ClaudeDashboardParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeDashboardParserTests.swift; sourceTree = "<group>"; };
 		D9959F4FD7643E380D38B2B5 /* CursorSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorSessionManager.swift; sourceTree = "<group>"; };
 		DA5C6BC0AD596AED83C47006 /* DashboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardStore.swift; sourceTree = "<group>"; };
 		DA5F8994ED80530285527F1F /* CursorDashboardClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorDashboardClient.swift; sourceTree = "<group>"; };
@@ -95,6 +115,7 @@
 			isa = PBXGroup;
 			children = (
 				E18CAE37660B7A2650989AB6 /* App */,
+				A05BD11AE6D23775FBB45C81 /* Claude */,
 				59F5DDDB716619290152B586 /* Core */,
 				088D0ACA5178ACB88ABBE417 /* Cursor */,
 				5DE02F4D11C325ADFB948A2D /* Resources */,
@@ -121,6 +142,7 @@
 				31FB832DFD729D83A740E12F /* DashboardParserSupport.swift */,
 				DA5C6BC0AD596AED83C47006 /* DashboardStore.swift */,
 				220E0695EAC46DC1F85AFF6A /* DisplayFormatting.swift */,
+				4AED8C1F249B87F016FE1950 /* LaunchAtLoginController.swift */,
 				7F9D2904EFDABD5DF920C626 /* Models.swift */,
 			);
 			path = Core;
@@ -158,11 +180,15 @@
 		6BE5B1E61C8DA13405B919F0 /* AIMeterTests */ = {
 			isa = PBXGroup;
 			children = (
+				9147CD023202EB34E75E3244 /* ClaudeDashboardClientTests.swift */,
+				D76EE46FC0F25079640B7181 /* ClaudeDashboardParserTests.swift */,
+				A1142B813581A0C8C5C28CC0 /* ClaudeURLValidatorTests.swift */,
 				B83BFABBC211E9D2B6B80607 /* CursorDashboardClientTests.swift */,
 				E619902272D73EAA21BE7E86 /* CursorDashboardParserTests.swift */,
 				3D5248E2FC151A9B9093ED03 /* CursorURLValidatorTests.swift */,
 				6915453C9676CDEC7C0F8D56 /* CursorUsageCoordinatorTests.swift */,
 				857977CEBB2AD3B77F779BE0 /* DashboardStoreTests.swift */,
+				B3E79D6B78A53D1211494926 /* LaunchAtLoginControllerTests.swift */,
 				AD89BA7914EC59EAF85F0820 /* SettingsStoreTests.swift */,
 			);
 			path = AIMeterTests;
@@ -174,6 +200,18 @@
 				0CDC614998082FB7F6D0A362 /* SettingsStore.swift */,
 			);
 			path = Storage;
+			sourceTree = "<group>";
+		};
+		A05BD11AE6D23775FBB45C81 /* Claude */ = {
+			isa = PBXGroup;
+			children = (
+				8C775C6F21F776CFC85042C2 /* ClaudeDashboardClient.swift */,
+				A7E14839A8A946337534166A /* ClaudeDashboardParser.swift */,
+				C420458D523C4CEB80EC47EC /* ClaudeSessionManager.swift */,
+				840E0569B54B9055EB4C02D5 /* ClaudeURLValidator.swift */,
+				142F6C2B525D90B5BBA702DD /* ClaudeWebViewScraper.swift */,
+			);
+			path = Claude;
 			sourceTree = "<group>";
 		};
 		A1771816C65CD55396ECCC05 /* Tests */ = {
@@ -294,6 +332,11 @@
 				E5A509FE67E9447954D7EBAE /* AIMeterApp.swift in Sources */,
 				5DA768643675F16EAA2404C1 /* AppDelegate.swift in Sources */,
 				16E9ED501E3DAEA0DBB88F6F /* AppEnvironment.swift in Sources */,
+				2CA8FA61A5C20556C7E5D3A4 /* ClaudeDashboardClient.swift in Sources */,
+				DCD70E6C8B626BC4ECC085ED /* ClaudeDashboardParser.swift in Sources */,
+				B04C0F6AE524941B25A00C00 /* ClaudeSessionManager.swift in Sources */,
+				3F11C255F9E1FA77D2368802 /* ClaudeURLValidator.swift in Sources */,
+				7A41A199874C804864853F5C /* ClaudeWebViewScraper.swift in Sources */,
 				CA590F245D06651252D77DD8 /* CursorDashboardClient.swift in Sources */,
 				99107B459FAA2AE226C5AE14 /* CursorDashboardParser.swift in Sources */,
 				4C8674BA33C001459514BF08 /* CursorSessionManager.swift in Sources */,
@@ -304,6 +347,7 @@
 				B8BB5A1603DF2D7A8322889F /* DashboardParserSupport.swift in Sources */,
 				55526BF3A52F07704C24CA6F /* DashboardStore.swift in Sources */,
 				16971F3175C89B2A15EFB518 /* DisplayFormatting.swift in Sources */,
+				7B529974CA70C28055608579 /* LaunchAtLoginController.swift in Sources */,
 				C4A52A88F70241337DA598B2 /* MenuBarController.swift in Sources */,
 				F8D950FF33F268122E482D7C /* MenuPopoverView.swift in Sources */,
 				AA2B2846B0C47F67E0671F16 /* Models.swift in Sources */,
@@ -318,11 +362,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				463AE1CF5D5963CD03F14394 /* ClaudeDashboardClientTests.swift in Sources */,
+				F4E60418E434356BCE5AD04C /* ClaudeDashboardParserTests.swift in Sources */,
+				E0328C390C3E66C7508A5D9E /* ClaudeURLValidatorTests.swift in Sources */,
 				04548EF004C329784B64BCA3 /* CursorDashboardClientTests.swift in Sources */,
 				B149FFFA8A280A968A5C3F87 /* CursorDashboardParserTests.swift in Sources */,
 				97A1630D913120EBA9E7E173 /* CursorURLValidatorTests.swift in Sources */,
 				C403835B877C1DF3D5B7A06B /* CursorUsageCoordinatorTests.swift in Sources */,
 				33B2ADEF3FE285F96B631DF4 /* DashboardStoreTests.swift in Sources */,
+				DB75591FE772270B8B33ADA3 /* LaunchAtLoginControllerTests.swift in Sources */,
 				171F47E1D3B27D9B6E45B003 /* SettingsStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

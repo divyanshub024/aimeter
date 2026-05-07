@@ -1,14 +1,14 @@
 import Foundation
 
 @MainActor
-final class CursorDashboardClient: CursorUsageClient {
-    let provider = UsageProvider.cursor
+final class ClaudeDashboardClient: ProviderUsageClient {
+    let provider = UsageProvider.claude
 
     private let settingsStore: SettingsStore
-    private let sessionManager: CursorSessionManaging
-    private var pendingConnectedSnapshot: CursorUsageSnapshot?
+    private let sessionManager: ClaudeSessionManaging
+    private var pendingConnectedSnapshot: ProviderUsageSnapshot?
 
-    init(settingsStore: SettingsStore, sessionManager: CursorSessionManaging) {
+    init(settingsStore: SettingsStore, sessionManager: ClaudeSessionManaging) {
         self.settingsStore = settingsStore
         self.sessionManager = sessionManager
     }
@@ -18,10 +18,12 @@ final class CursorDashboardClient: CursorUsageClient {
         pendingConnectedSnapshot = try await sessionManager.connect(to: usagePageURL)
     }
 
-    func fetchUsage() async throws -> CursorUsageSnapshot {
+    func fetchUsage() async throws -> ProviderUsageSnapshot {
         if let pendingConnectedSnapshot {
             self.pendingConnectedSnapshot = nil
-            return pendingConnectedSnapshot
+            if pendingConnectedSnapshot.progressPercent != nil {
+                return pendingConnectedSnapshot
+            }
         }
 
         let usagePageURL = try resolvedUsagePageURL()
@@ -34,6 +36,6 @@ final class CursorDashboardClient: CursorUsageClient {
     }
 
     private func resolvedUsagePageURL() throws -> URL {
-        try CursorURLValidator.validatedUsageURL(from: settingsStore.settings.cursor.usagePageURL)
+        try ClaudeURLValidator.validatedUsageURL(from: settingsStore.settings.claude.usagePageURL)
     }
 }
