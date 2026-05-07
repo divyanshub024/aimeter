@@ -184,10 +184,7 @@ enum ClaudeDashboardParser {
         }
 
         return metrics
-            .removingDuplicateMetrics()
-            .sorted { first, second in
-                usageMetricPriority(first.title) < usageMetricPriority(second.title)
-            }
+            .normalizedUsageSettingsMetrics(sourceURL: sourceURL)
     }
 
     private static func normalizedUsageMetricTitle(
@@ -381,7 +378,7 @@ enum ClaudeDashboardParser {
         ["free", "pro", "max", "team", "enterprise"].contains(lowercasedLine)
     }
 
-    private static func usageMetricPriority(_ title: String) -> Int {
+    fileprivate static func metricPriority(_ title: String) -> Int {
         let lowercased = title.lowercased()
         if lowercased.contains("current session") {
             return 0
@@ -574,5 +571,109 @@ private extension Array where Element == UsageMetric {
         return filter { metric in
             seen.insert("\(metric.title.lowercased())|\(metric.value)").inserted
         }
+    }
+
+    func normalizedUsageSettingsMetrics(sourceURL: String) -> [UsageMetric] {
+        let metrics = removingDuplicateMetrics()
+        guard ClaudeURLValidator.isUsageSettingsURLString(sourceURL) else {
+            return metrics.sorted { first, second in
+                ClaudeDashboardParser.metricPriority(first.title) < ClaudeDashboardParser.metricPriority(second.title)
+            }
+        }
+
+        let usageTitles = ["Current session", "All models", "Claude Design"]
+        var usageByTitle: [String: UsageMetric] = [:]
+        var resetByTitle: [String: UsageMetric] = [:]
+
+        for metric in metrics {
+            if let usageTitle = Self.canonicalUsageTitle(metric.title, allowedTitles: usageTitles),
+               metric.percent != nil {
+                let canonicalMetric = UsageMetric(
+                    title: usageTitle,
+                    value: metric.value,
+                    percent: metric.percent
+                )
+                usageByTitle[usageTitle] = Self.preferredUsageMetric(
+                    current: usageByTitle[usageTitle],
+                    candidate: canonicalMetric
+                )
+                continue
+            }
+
+            if let resetUsageTitle = Self.canonicalResetUsageTitle(metric.title, allowedTitles: usageTitles) {
+                let resetTitle = resetUsageTitle.caseInsensitiveCompare("Current session") == .orderedSame
+                    ? "Reset"
+                    : "\(resetUsageTitle) reset"
+                let canonicalMetric = UsageMetric(title: resetTitle, value: metric.value)
+                resetByTitle[resetTitle] = Self.preferredResetMetric(
+                    current: resetByTitle[resetTitle],
+                    candidate: canonicalMetric
+                )
+            }
+        }
+
+        var normalized: [UsageMetric] = []
+        for title in usageTitles {
+            guard let usageMetric = usageByTitle[title] else {
+                continue
+            }
+
+            normalized.append(usageMetric)
+
+            let resetTitle = title.caseInsensitiveCompare("Current session") == .orderedSame
+                ? "Reset"
+                : "\(title) reset"
+            if let resetMetric = resetByTitle[resetTitle] {
+                normalized.append(resetMetric)
+            }
+        }
+
+        return normalized
+    }
+
+    private static func canonicalUsageTitle(_ title: String, allowedTitles: [String]) -> String? {
+        allowedTitles.first { $0.caseInsensitiveCompare(title) == .orderedSame }
+    }
+
+    private static func canonicalResetUsageTitle(_ title: String, allowedTitles: [String]) -> String? {
+        if title.caseInsensitiveCompare("Reset") == .orderedSame {
+            return "Current session"
+        }
+
+        let lowercasedTitle = title.lowercased()
+        guard lowercasedTitle.hasSuffix(" reset") else {
+            return nil
+        }
+
+        let usageTitle = String(title.dropLast(" reset".count))
+        return canonicalUsageTitle(usageTitle, allowedTitles: allowedTitles)
+    }
+
+    private static func preferredUsageMetric(
+        current: UsageMetric?,
+        candidate: UsageMetric
+    ) -> UsageMetric {
+        guard let current else {
+            return candidate
+        }
+
+        if (current.percent ?? 0) == 0, (candidate.percent ?? 0) > 0 {
+            return candidate
+        }
+
+        return current
+    }
+
+    private static func preferredResetMetric(
+        current: UsageMetric?,
+        candidate: UsageMetric
+    ) -> UsageMetric {
+        guard let current else {
+            return candidate
+        }
+
+        let currentHasTime = current.value.rangeOfCharacter(from: .decimalDigits) != nil
+        let candidateHasTime = candidate.value.rangeOfCharacter(from: .decimalDigits) != nil
+        return !currentHasTime && candidateHasTime ? candidate : current
     }
 }

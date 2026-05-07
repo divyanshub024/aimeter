@@ -27,7 +27,7 @@ struct MenuPopoverView: View {
                 header
                 Divider()
 
-                if shouldShowInitialLoading(state: state, connectedProviderCount: connectedSnapshots.count) {
+                if shouldShowInitialLoading(connectedProviderCount: connectedSnapshots.count) {
                     initialLoadingContent
                 } else if state.presentationState == .firstRun || connectedSnapshots.isEmpty {
                     firstRunContent
@@ -76,10 +76,6 @@ struct MenuPopoverView: View {
             claudeUsageCoordinator.isConnecting
     }
 
-    private var isAnyProviderConnecting: Bool {
-        cursorUsageCoordinator.isConnecting || claudeUsageCoordinator.isConnecting
-    }
-
     private var isAnyProviderRefreshing: Bool {
         cursorUsageCoordinator.isRefreshing || claudeUsageCoordinator.isRefreshing
     }
@@ -88,14 +84,9 @@ struct MenuPopoverView: View {
         cursorUsageCoordinator.hasLoadedOnce && claudeUsageCoordinator.hasLoadedOnce
     }
 
-    private func shouldShowInitialLoading(
-        state: DashboardState,
-        connectedProviderCount: Int
-    ) -> Bool {
-        state.presentationState == .firstRun &&
-            connectedProviderCount == 0 &&
-            (isAnyProviderRefreshing || !hasLoadedProviderState) &&
-            !isAnyProviderConnecting
+    private func shouldShowInitialLoading(connectedProviderCount: Int) -> Bool {
+        connectedProviderCount == 0 &&
+            (isAnyProviderRefreshing || !hasLoadedProviderState)
     }
 
     private func preferredHeight(
@@ -157,8 +148,8 @@ struct MenuPopoverView: View {
     }
 
     private func providerSection(_ snapshot: ProviderUsageSnapshot) -> some View {
-        let statusMetrics = snapshot.secondaryMetrics.filter { $0.percent == nil }
-        let usageMetrics = snapshot.secondaryMetrics.filter { $0.percent != nil }
+        let statusMetrics = displayStatusMetrics(for: snapshot)
+        let usageMetrics = displayUsageMetrics(for: snapshot)
         let primaryResetText = primaryResetText(for: snapshot, statusMetrics: statusMetrics)
         let unpairedStatusMetrics = unpairedStatusMetrics(
             statusMetrics,
@@ -242,6 +233,29 @@ struct MenuPopoverView: View {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color(nsColor: .controlBackgroundColor))
         )
+    }
+
+    private func displayUsageMetrics(for snapshot: ProviderUsageSnapshot) -> [UsageMetric] {
+        let metrics = snapshot.secondaryMetrics.filter { $0.percent != nil }
+        guard snapshot.provider == .claude else {
+            return metrics.removingDuplicateTitles()
+        }
+
+        return ["All models", "Claude Design"].compactMap { title in
+            metrics.first { $0.title.caseInsensitiveCompare(title) == .orderedSame }
+        }
+    }
+
+    private func displayStatusMetrics(for snapshot: ProviderUsageSnapshot) -> [UsageMetric] {
+        let metrics = snapshot.secondaryMetrics.filter { $0.percent == nil }
+        guard snapshot.provider == .claude else {
+            return metrics.removingDuplicateTitles()
+        }
+
+        let titles = ["Reset", "All models reset", "Claude Design reset"]
+        return titles.compactMap { title in
+            metrics.first { $0.title.caseInsensitiveCompare(title) == .orderedSame }
+        }
     }
 
     private func statusMetricLine(_ metric: UsageMetric) -> some View {
@@ -432,6 +446,15 @@ struct MenuPopoverView: View {
             return (onRefreshCursor, onConnectCursor, onDisconnectCursor)
         case .claude:
             return (onRefreshClaude, onConnectClaude, onDisconnectClaude)
+        }
+    }
+}
+
+private extension Array where Element == UsageMetric {
+    func removingDuplicateTitles() -> [UsageMetric] {
+        var seen: Set<String> = []
+        return filter { metric in
+            seen.insert(metric.title.lowercased()).inserted
         }
     }
 }

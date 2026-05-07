@@ -122,6 +122,72 @@ final class ClaudeDashboardParserTests: XCTestCase {
         XCTAssertNil(snapshot.secondaryMetrics.first { $0.title == "Limit" })
     }
 
+    func testDeduplicatesRepeatedSettingsUsageRows() {
+        let text = """
+        Settings
+        Plan usage limits
+        Pro
+        Current session
+        Resets in 1 hr 4 min
+        27% used
+        All models
+        Resets Sun 11:30 AM
+        55% used
+        Claude Design
+        Resets Sun 11:29 AM
+        7% used
+        Claude Design
+        Resets Sun 11:29 AM
+        7% used
+        All models
+        Resets Sun 11:30 AM
+        55% used
+        """
+
+        let result = ClaudeDashboardParser.parseDOMText(text, sourceURL: "https://claude.ai/settings/usage")
+
+        guard case .usage(let snapshot) = result else {
+            return XCTFail("Expected repeated Claude usage settings rows to parse.")
+        }
+
+        XCTAssertEqual(snapshot.secondaryMetrics.filter { $0.title == "All models" }.count, 1)
+        XCTAssertEqual(snapshot.secondaryMetrics.filter { $0.title == "All models reset" }.count, 1)
+        XCTAssertEqual(snapshot.secondaryMetrics.filter { $0.title == "Claude Design" }.count, 1)
+        XCTAssertEqual(snapshot.secondaryMetrics.filter { $0.title == "Claude Design reset" }.count, 1)
+        XCTAssertEqual(snapshot.secondaryMetrics.first { $0.title == "All models" }?.percent, 55)
+        XCTAssertEqual(snapshot.secondaryMetrics.first { $0.title == "Claude Design" }?.percent, 7)
+    }
+
+    func testKeepsClaudeUsageSettingsMetricsInStaticOrder() {
+        let text = """
+        Settings
+        Plan usage limits
+        Pro
+        Claude Design
+        Resets Sun 11:29 AM
+        7% used
+        All models
+        Resets Sun 11:30 AM
+        55% used
+        Current session
+        Resets in 1 hr 4 min
+        27% used
+        """
+
+        let result = ClaudeDashboardParser.parseDOMText(text, sourceURL: "https://claude.ai/settings/usage")
+
+        guard case .usage(let snapshot) = result else {
+            return XCTFail("Expected reordered Claude usage settings rows to parse.")
+        }
+
+        XCTAssertEqual(snapshot.primaryMetric.title, "Current session")
+        XCTAssertEqual(snapshot.secondaryMetrics.filter { $0.percent != nil }.map(\.title), [
+            "All models",
+            "Claude Design"
+        ])
+        XCTAssertEqual(snapshot.secondaryMetrics.first { $0.title == "Reset" }?.value, "Resets in 1 hr 4 min")
+    }
+
     func testParsesLimitTextWithoutPercentage() {
         let text = """
         Claude Max
