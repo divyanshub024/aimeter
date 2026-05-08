@@ -128,6 +128,54 @@ final class CursorUsageCoordinatorTests: XCTestCase {
         XCTAssertEqual(client.disconnectCallCount, 1)
     }
 
+    func testDisconnectIgnoresInFlightRefreshResult() async {
+        let userDefaults = UserDefaults(suiteName: #function)!
+        userDefaults.removePersistentDomain(forName: #function)
+
+        let settingsStore = SettingsStore(userDefaults: userDefaults)
+        let client = DelayedCursorUsageClient()
+        let coordinator = CursorUsageCoordinator(settingsStore: settingsStore, client: client)
+
+        let refreshTask = Task {
+            await coordinator.refresh()
+        }
+        await client.waitForFetch()
+
+        coordinator.disconnect()
+        client.completeFetch(
+            .success(
+                CursorUsageSnapshot(
+                    planLabel: "Cursor Plan",
+                    totalUsedPercent: 42,
+                    autoUsedPercent: 12,
+                    apiUsedPercent: 67,
+                    fetchedAt: Date(timeIntervalSince1970: 100),
+                    connectionState: .connected
+                )
+            )
+        )
+        await refreshTask.value
+
+        XCTAssertEqual(coordinator.snapshot, .disconnected)
+        XCTAssertEqual(client.disconnectCallCount, 1)
+    }
+
+    func testRefreshSkipsAfterManualDisconnect() async {
+        let userDefaults = UserDefaults(suiteName: #function)!
+        userDefaults.removePersistentDomain(forName: #function)
+
+        let settingsStore = SettingsStore(userDefaults: userDefaults)
+        let client = MockCursorUsageClient(fetchResults: [.failure(CursorUsageError.authExpired)])
+        let coordinator = CursorUsageCoordinator(settingsStore: settingsStore, client: client)
+
+        coordinator.disconnect()
+        await coordinator.refresh()
+
+        XCTAssertEqual(coordinator.snapshot, .disconnected)
+        XCTAssertEqual(client.fetchCallCount, 0)
+        XCTAssertEqual(client.disconnectCallCount, 1)
+    }
+
     func testClaudeRefreshPreservesLastSuccessfulSnapshotOnFailure() async {
         let userDefaults = UserDefaults(suiteName: #function)!
         userDefaults.removePersistentDomain(forName: #function)
@@ -168,6 +216,7 @@ private final class MockCursorUsageClient: CursorUsageClient {
     let provider: UsageProvider
     var connectCallCount = 0
     var disconnectCallCount = 0
+    var fetchCallCount = 0
 
     private var fetchResults: [Result<CursorUsageSnapshot, Error>]
 
@@ -184,6 +233,8 @@ private final class MockCursorUsageClient: CursorUsageClient {
     }
 
     func fetchUsage() async throws -> CursorUsageSnapshot {
+        fetchCallCount += 1
+
         guard !fetchResults.isEmpty else {
             throw CursorUsageError.syncFailed("No mock result configured")
         }
@@ -194,5 +245,43 @@ private final class MockCursorUsageClient: CursorUsageClient {
 
     func disconnect() {
         disconnectCallCount += 1
+    }
+}
+
+@MainActor
+private final class DelayedCursorUsageClient: CursorUsageClient {
+    let provider = UsageProvider.cursor
+    var disconnectCallCount = 0
+
+    private var fetchContinuation: CheckedContinuation<CursorUsageSnapshot, Error>?
+    private var fetchStartedContinuation: CheckedContinuation<Void, Never>?
+
+    func connect() async throws {}
+
+    func fetchUsage() async throws -> CursorUsageSnapshot {
+        try await withCheckedThrowingContinuation { continuation in
+            fetchContinuation = continuation
+            fetchStartedContinuation?.resume()
+            fetchStartedContinuation = nil
+        }
+    }
+
+    func disconnect() {
+        disconnectCallCount += 1
+    }
+
+    func waitForFetch() async {
+        if fetchContinuation != nil {
+            return
+        }
+
+        await withCheckedContinuation { continuation in
+            fetchStartedContinuation = continuation
+        }
+    }
+
+    func completeFetch(_ result: Result<CursorUsageSnapshot, Error>) {
+        fetchContinuation?.resume(with: result)
+        fetchContinuation = nil
     }
 }

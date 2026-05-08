@@ -221,6 +221,26 @@ final class DashboardStoreTests: XCTestCase {
         XCTAssertEqual(state.connectedProviderSnapshots.map(\.provider), [.cursor, .claude])
         XCTAssertEqual(state.menuBarProgressPercent, 19, accuracy: 0.01)
     }
+
+    func testUnsyncedExpiredProviderSnapshotIsHiddenFromPopover() {
+        let state = DashboardState(
+            presentationState: .dashboard,
+            providerSnapshots: [
+                DashboardState.defaultSnapshot(for: .cursor).withConnectionState(.authExpired),
+                ProviderUsageSnapshot(
+                    provider: .claude,
+                    planLabel: "Claude Pro",
+                    primaryMetric: UsageMetric(title: "Usage", value: "54%", percent: 54),
+                    secondaryMetrics: [],
+                    fetchedAt: Date(timeIntervalSince1970: 200),
+                    connectionState: .connected
+                )
+            ],
+            lastRefreshAt: Date(timeIntervalSince1970: 200)
+        )
+
+        XCTAssertEqual(state.connectedProviderSnapshots.map(\.provider), [.claude])
+    }
 }
 
 @MainActor

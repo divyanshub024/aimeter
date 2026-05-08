@@ -14,6 +14,8 @@ final class ProviderUsageCoordinator: ObservableObject {
 
     private var refreshTask: Task<Void, Never>?
     private var lastSuccessfulSnapshot: ProviderUsageSnapshot?
+    private var operationGeneration = 0
+    private var isManuallyDisconnected = false
 
     init(settingsStore: SettingsStore, client: ProviderUsageClient) {
         self.settingsStore = settingsStore
@@ -49,33 +51,43 @@ final class ProviderUsageCoordinator: ObservableObject {
             return
         }
 
+        isManuallyDisconnected = false
+        operationGeneration += 1
+        let generation = operationGeneration
         isConnecting = true
         defer { isConnecting = false }
 
         do {
             try await client.connect()
-            try await fetchAndStoreSnapshot()
+            try await fetchAndStoreSnapshot(generation: generation)
+            guard generation == operationGeneration else { return }
             hasLoadedOnce = true
         } catch let error as ProviderUsageError {
+            guard generation == operationGeneration else { return }
             applyFailureState(error.connectionState)
             hasLoadedOnce = true
         } catch {
+            guard generation == operationGeneration else { return }
             applyFailureState(.syncFailed(reason: error.localizedDescription))
             hasLoadedOnce = true
         }
     }
 
     func disconnect() {
+        operationGeneration += 1
+        isManuallyDisconnected = true
         client.disconnect()
         lastSuccessfulSnapshot = nil
         snapshot = DashboardState.defaultSnapshot(for: provider)
+        hasLoadedOnce = true
     }
 
     func refresh() async {
-        if isRefreshing || isConnecting {
+        if isRefreshing || isConnecting || isManuallyDisconnected {
             return
         }
 
+        let generation = operationGeneration
         isRefreshing = true
         defer {
             isRefreshing = false
@@ -83,16 +95,19 @@ final class ProviderUsageCoordinator: ObservableObject {
         }
 
         do {
-            try await fetchAndStoreSnapshot()
+            try await fetchAndStoreSnapshot(generation: generation)
         } catch let error as ProviderUsageError {
+            guard generation == operationGeneration else { return }
             applyFailureState(error.connectionState)
         } catch {
+            guard generation == operationGeneration else { return }
             applyFailureState(.syncFailed(reason: error.localizedDescription))
         }
     }
 
-    private func fetchAndStoreSnapshot() async throws {
+    private func fetchAndStoreSnapshot(generation: Int) async throws {
         let fetched = try await client.fetchUsage()
+        guard generation == operationGeneration else { return }
         snapshot = fetched
         lastSuccessfulSnapshot = fetched
     }

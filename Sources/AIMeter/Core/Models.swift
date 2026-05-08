@@ -251,7 +251,16 @@ struct DashboardState: Equatable {
     }
 
     var connectedProviderSnapshots: [ProviderUsageSnapshot] {
-        providerSnapshots.filter { $0.connectionState != .disconnected }
+        providerSnapshots.filter { snapshot in
+            switch snapshot.connectionState {
+            case .connected:
+                return true
+            case .authExpired, .syncFailed:
+                return snapshot.hasSuccessfulSync
+            case .disconnected:
+                return false
+            }
+        }
     }
 
     var menuBarProgressPercent: Double {
